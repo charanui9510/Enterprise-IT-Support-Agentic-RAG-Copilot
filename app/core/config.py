@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     app_name: str = "Enterprice IT Support Agentic RAG Copilot"
     app_env : str = "development"
     openai_api_Key : str = ""
+    pinecone_api_key :str = ""
    # groq_api_key : str = ""
     tavily_api_key : str = ""
     pinecone_index_name : str = "fde-it-support-rag"
