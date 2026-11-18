@@ -5,5 +5,4 @@ from app.rag.vectorstore import add_documents
 
 docs = load_file(Path("data/sample_kb/company_it_handbook.md"))
 chunks = chunk_documents(docs)
-
-print(chunks)
+add_documents(chunks)

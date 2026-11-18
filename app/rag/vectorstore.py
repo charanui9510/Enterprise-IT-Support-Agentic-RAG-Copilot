@@ -1,6 +1,8 @@
 import time 
+import os
 from pinecone import Pinecone , ServerlessSpec
-from langchain_openai import OpenAIEmbeddings
+# from langchain_openai import OpenAIEmbeddings
+from langchain_cohere import CohereEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from app.core.config import get_settings
 
@@ -14,6 +16,9 @@ EMBEDDING_DIMENSIONS = {
     "text-embedding-3-large": 3072,
     "text-embedding-ada-002": 1536,
     "all-minilm-16-v2": 384,
+    "embed-english-v3.0": 1024,
+    "embed-multilingual-v3.0": 1024,
+    "embed-v4.0": 1536
 }
 
 # Creating embeddings
@@ -34,6 +39,10 @@ def get_embedding_dimension(model_name: str | None = None) -> int:
         return 1536
     if "all-minilm-16-v2" in normalized : 
         return 384
+    if "embed-english-v3.0" in normalized or "embed-multilingual-v3.0" in normalized:
+        return 1024
+    if "embed-v4.0" in normalized:
+        return 1536
 
     raise ValueError(
         f"Unsupported embedding model '{model_name or settings.embedding_model}' for Pinecone. "
@@ -43,11 +52,12 @@ def get_embedding_dimension(model_name: str | None = None) -> int:
 def get_embeddings():
     global _embeddings
     if _embeddings is None:
-        if not settings.openai_api_Key:
-            raise RuntimeError("OPENAI_API_KEY is missing")
-        _embeddings =OpenAIEmbeddings(
+        if not settings.cohere_api_key:
+            raise RuntimeError("COHERE_API_KEY is missing")
+        os.environ["COHERE_API_KEY"] = settings.cohere_api_key
+        _embeddings = CohereEmbeddings(
             model=settings.embedding_model,
-            api_key=settings.openai_api_Key
+           # api_key=settings.cohere_api_key
         )
     return _embeddings
 
@@ -60,7 +70,7 @@ def ensure_index():
 
     desired_dimension = get_embedding_dimension()
     pc = Pinecone(api_key=settings.pinecone_api_key)
-    names = [x["name"] for x in pc.list_indexces]
+    names = [x["name"] for x in pc.list_indexes()]
 
     if settings.pinecone_index_name in names:
         index_info = pc.describe_index(settings.pinecone_index_name)
@@ -75,7 +85,7 @@ def ensure_index():
 
 
     if settings.pinecone_index_name not in [x["name"] for x in pc.list_indexes()]:
-        pc.ccreate_index(
+        pc.create_index(
             name = settings.pinecone_index_name,
             dimension  = desired_dimension,
             metric = "cosine",
