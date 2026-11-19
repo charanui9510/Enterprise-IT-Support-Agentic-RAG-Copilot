@@ -15,4 +15,5 @@ openai == 3.51.0
 pypdf == 7.1.0
 python-docx == 1.2.0
 python-dotenv == 1.2.4
+langchain-cohere == 0.6.0
 
